@@ -27,17 +27,15 @@ extern uint8_t debug;
 //Variables de stockage pour la vitesse des moteurs durant l'intéruption de l'ADC 
 extern volatile uint8_t nombre_echantillon[2];
 extern volatile uint16_t somme_vitesse[2];
-
 extern volatile uint8_t flag5ms;
 
 static volatile uint16_t compteur1;
-
 static volatile uint8_t calibration_rdy;
 static volatile uint8_t calibration_req;
 
 //Variable de calibration des moteurs
-extern uint16_t vMaxPlus[2], vZeroPlus[2], vMaxMoins[2], vZeroMoins[2];
-extern float aPlus[2], bPlus[2], aMoins[2], bMoins[2];
+extern float vMaxPlus[2], vZeroPlus[2], vMaxMoins[2], vZeroMoins[2];
+extern float aPlus[2], aMoins[2];
 
 void PWM_Init(void) {
 	
@@ -107,12 +105,11 @@ void PWM_calibrer(void)
 	somme_vitesse[GAUCHE]=0;
 	somme_vitesse[DROIT]=0;
 	while(nombre_echantillon[GAUCHE]<ECHANTILLON_INIT && nombre_echantillon[DROIT]<ECHANTILLON_INIT)
+	//	_delay_ms(50);
 	;//On attend que l'ADC est recolté assez d'échantillons
 	
 	moyenne_Moteur(vMaxPlus);
-	sprintf(debugChaine, "%d", vMaxPlus[GAUCHE]);
-	debug=1;
-	UCSRB|=(1<<UDRIE);
+
 	/*
 	sprintf(debugChaine, "%d", vMaxPlus[GAUCHE]);
 	debug=1;
@@ -136,9 +133,11 @@ void PWM_calibrer(void)
 	while(nombre_echantillon[GAUCHE]<ECHANTILLON_INIT && nombre_echantillon[DROIT]<ECHANTILLON_INIT)
 	;//On attend que l'ADC est recolté assez d'échantillons
 	moyenne_Moteur(vZeroPlus);
+	
+
 	PORTB^=0b00000010;
 	/*
-	sprintf(debugChaine, "%d", vZeroPlus[GAUCHE]);
+	sprintf(debugChaine, "%d\r\n", (int)(vZeroPlus[GAUCHE]*1000));
 	debug=1;
 	UCSRB|=(1<<UDRIE);
 	*/
@@ -159,11 +158,11 @@ void PWM_calibrer(void)
 	;//On attend que l'ADC est recolté assez d'échantillons
 	moyenne_Moteur(vMaxMoins);
 	PORTB^=0b00000100;
-	/*
-	sprintf(debugChaine, "%d", vMaxMoins[GAUCHE]);
+/*	
+	sprintf(debugChaine, "%d\r\n", (int)(vMaxMoins[GAUCHE]*1000));
 	debug=1;
 	UCSRB|=(1<<UDRIE);
-	*/
+*/	
 	//Calibration de Vzero-
 	PORTD |= (1 << DIR_G2) |  (1 << DIR_D2); //conf V+
 	PORTD &= ~(1 << DIR_G1) |  ~(1 << PWM_G) | ~(1 << PWM_D) | ~(1 << DIR_D1); //conf V+
@@ -181,131 +180,101 @@ void PWM_calibrer(void)
 	; //On attend que l'ADC est recolté assez d'échantillons
 	moyenne_Moteur(vZeroMoins);
 	PORTB^=0b00001000;
-	/*
-	sprintf(debugChaine, "%d", vZeroMoins[GAUCHE]);
+/*	
+	sprintf(debugChaine, "%d\r\n", (int)(vZeroMoins[GAUCHE]*1000));
 	debug=1;
 	UCSRB|=(1<<UDRIE);
-	*/
+*/	
 	//Une fois tous nos échantillons récupérés, on calcul les termes des fonctions de correction (y=a.x+b)
 	aPlus[GAUCHE] = (float)(((float)1023) / ((float)vMaxPlus[GAUCHE] - (float)vZeroPlus[GAUCHE]));
+	aPlus[GAUCHE] /= 1024.0;
 	aPlus[DROIT]  = (float)(((float)1023) / ((float)vMaxPlus[DROIT] - (float)vZeroPlus[DROIT]));
+	aPlus[DROIT] /= 1024.0;
+	
 	//bPlus[GAUCHE] = (float)(-aPlus[GAUCHE]*vZeroPlus[GAUCHE]/1024); //On divise ici le coef b par 1024 afin d'éviter une division de float
 	//bPlus[DROIT]  = (float)(-aPlus[DROIT]*vZeroPlus[DROIT]/1024); //
 
-	aMoins[GAUCHE]= (float)(((float)1023) / ((float)vMaxMoins[GAUCHE] - (float)vZeroMoins[GAUCHE]));
+	aMoins[GAUCHE] = (float)(((float)1023) / ((float)vMaxMoins[GAUCHE] - (float)vZeroMoins[GAUCHE]));
+	aMoins[GAUCHE] /= 1024.0;
 	aMoins[DROIT] = (float)(((float)1023) / ((float)vMaxMoins[DROIT] - (float)vZeroMoins[DROIT]));
+	aMoins[DROIT] /= 1024.0;
+
+	
 	//bMoins[GAUCHE]= (float)(-aMoins[GAUCHE]*vZeroMoins[GAUCHE]/1024);
 	//bMoins[DROIT] = (float)(-aMoins[DROIT]*vZeroMoins[DROIT]/1024);
 
-    /*
-	_delay_ms(100);
-	sprintf(debugChaine, "%d",(int)(aPlus[GAUCHE]*1000));
+	/*
+	sprintf(debugChaine, "%d\r\n", (int)(aPlus[GAUCHE]*1000));
 	debug=1;
 	UCSRB|=(1<<UDRIE);
-    _delay_ms(500);
-	
-	sprintf(debugChaine, "%f", aMoins[GAUCHE]);
+	_delay_ms(20);
+
+	sprintf(debugChaine, "%d\r\n", (int)(aMoins[GAUCHE]*1000));
 	debug=1;
 	UCSRB|=(1<<UDRIE);
-	_delay_ms(500);
+	_delay_ms(20);
+
+	sprintf(debugChaine, "%d\r\n", (int)(aPlus[DROIT]*1000));
+	debug=1;
+	UCSRB|=(1<<UDRIE);
+	_delay_ms(20);
+
+	sprintf(debugChaine, "%d\r\n", (int)(aMoins[DROIT]*1000));
+	debug=1;
+	UCSRB|=(1<<UDRIE);
+	_delay_ms(20);
 	*/
-	
-	/*	
-	sprintf(debugChaine, "%f", bPlus[GAUCHE]);
-	debug=1;
-	UCSRB|=(1<<UDRIE);
-	_delay_ms(100);
-		
-	sprintf(debugChaine, "%f", bMoins[GAUCHE]);
-	debug=1;
-	UCSRB|=(1<<UDRIE);
-	_delay_ms(100);
-	*/
-	//DDRA=0;
+
+
+
+
 	
 
 }
 
-/*
-ISR(TIMER1_OVF_vect){
-	
-	// Déclenché à chaque 5 ms en conformité est avec les paramètres d'initialisation 
-	// de la fonction PWM_init().
-	flag5ms=1;
-	if (calibration_req == 1)
-	{
-		compteur1++;
-		if (compteur1 >= REGIME_TRANSITOIRE)
-		{
-			calibration_req = 0;
-			compteur1 = 0;
-			calibration_rdy = 1;
 
-		}
-		
-	}
-	
-	
-}
-*/
-
-void ordre_Moteur(Ordre ordreG,Ordre ordreD )
+void ordre_Moteur2(float dutyCycleG, float dutyCycleD)
 {
+	//Cas Moteur Gauche
 	
-	
-	switch (ordreG)
+	if (dutyCycleG > 0.01)
 	{
-		case avant:
-		{
-			PORTD |= (1 << DIR_G1);
-			PORTD &= ~(1 << DIR_G2);
-			break;
-		}
-		case arriere:
-		{
-			PORTD |= (1 << DIR_G2);
-			PORTD &= ~(1 << DIR_G1);
-			break;
-		}
-		case neutre:
-		{
-			PORTD &= ~(1 << DIR_G2);
-			PORTD &= ~(1 << DIR_G1);
-			break;
-		}
-		case frein:
-		{
-			PORTD |= (1 << DIR_G2) | (1 << DIR_G1) ;
-			break;
-		}
+		OCR1B=(uint16_t)((float)ICR1*dutyCycleG);
+		PORTD |= (1 << DIR_G1);
+		PORTD &= ~(1 << DIR_G2);
+	}
+	
+	else if (dutyCycleG < 0.01)
+	{
+		OCR1B=(uint16_t)((float)ICR1*(-dutyCycleG));
+		PORTD |= (1 << DIR_G2);
+		PORTD &= ~(1 << DIR_G1);
 	}
 
-	switch (ordreD)
+	else 
 	{
-		case avant:
-		{
-			PORTD |= (1 << DIR_D1);
-			PORTD &= ~(1 << DIR_D2);
-			break;
-		}
-		case arriere:
-		{
-			PORTD |= (1 << DIR_D2);
-			PORTD &= ~(1 << DIR_D1);
-			break;
-		}
-		case neutre:
-		{
-			PORTD &= ~(1 << DIR_D2);
-			PORTD &= ~(1 << DIR_D1);
-			break;
-		}
-		case frein:
-		{
-			PORTD |= (1 << DIR_D2) | (1 << DIR_D1) ;
-			break;
-		}
+		PORTD |= (0 << DIR_D2) | (0 << DIR_D1) ;
+	}
+
+	//Cas Moteur Droit
+
+	if (dutyCycleD > 0.01)
+	{
+		OCR1A=(uint16_t)((float)ICR1*dutyCycleD);
+		PORTD |= (1 << DIR_D1);
+		PORTD &= ~(1 << DIR_D2);
 	}
 	
+	else if (dutyCycleD < 0.01)
+	{
+		OCR1A=(uint16_t)((float)ICR1*(-dutyCycleD));
+		PORTD |= (1 << DIR_D2);
+		PORTD &= ~(1 << DIR_D1);
+	}
+
+	else 
+	{
+		PORTD |= (0 << DIR_D2) | (0 << DIR_D1);
+	}
+
 }
-

@@ -128,6 +128,12 @@
     <Compile Include="ADC.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="i2c_caneva.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="i2c_caneva.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="moteur.c">
       <SubType>compile</SubType>
     </Compile>
@@ -141,6 +147,15 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="robot.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="TestI2C.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="twi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="twi.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="USART.c">

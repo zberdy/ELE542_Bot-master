@@ -15,7 +15,7 @@
 #include <stdio.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include <util/delay.h>
+//#include <util/delay.h>
 #include "USART.h"
 #include "ADC.h"
 
@@ -58,6 +58,7 @@ void PWM_Init(void);
 void PWM_Ecrire(uint8_t cycleG, uint8_t cycleD);
 void PWM_calibrer(void);
 void ordre_Moteur(Ordre ordreG,Ordre ordreD);
+void ordre_Moteur2(float dutyCycleG, float dutyCycleD);
 
 
 

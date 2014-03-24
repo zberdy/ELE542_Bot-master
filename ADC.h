@@ -13,6 +13,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "pwm.h"
+#define F_CPU ((uint32_t)16000000)
+#include <util/delay.h>
 
 #define PORT_ADC	PORTA
 
@@ -34,7 +36,7 @@
 /* Fonctions */
 
 void ADC_Init(void);
-void moyenne_Moteur(float vitesseMoteurCopie[]);
+void moyenne_Moteur(float vitesseMoteur[]);
 
 //Variables externes
 

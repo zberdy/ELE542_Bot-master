@@ -24,8 +24,9 @@ ISR(USART_RXC_vect)
 	//PORTB^=0x01;
 	if (debug==0)
 	{
+		UDR=donneRecue;
 		//USART_Envoie(donneRecue);
-		UCSRB|=(1<<UDRIE);
+//		UCSRB|=(1<<UDRIE);
 	}
 		
 	switch (etat)
@@ -61,34 +62,25 @@ ISR(USART_RXC_vect)
 //Intéruption pour l'envoi des données via l'USART
 ISR(USART_UDRE_vect)
 {
-	if (debug==1)
+	if (compteur==TAILLE_CHAINE)
 	{
-		if (compteur==TAILLE_CHAINE)
-		{
-			UDR=DEBUT_DEBUG;
-			compteur=0;
-		}
-		else
-		{
-			if (debugChaine[compteur]!='\0')
-			{
-				UDR=debugChaine[compteur];
-				compteur++;
-			}
-			else
-			{
-				UDR=FIN_DEBUG;
-				UCSRB &= ~(1 << UDRIE);
-				compteur=TAILLE_CHAINE;
-				debug=0;
-			}
-		}
-		
+		UDR=DEBUT_DEBUG;
+		compteur=0;
 	}
 	else
 	{
-		UDR=donneRecue;
-		UCSRB &= ~(1 << UDRIE);
+		if (debugChaine[compteur]!='\0')
+		{
+			UDR=debugChaine[compteur];
+			compteur++;
+		}
+		else
+		{
+			UDR=FIN_DEBUG;
+			UCSRB &= ~(1 << UDRIE);
+			compteur=TAILLE_CHAINE;
+			debug=0;
+		}
 	}
 	
 }
